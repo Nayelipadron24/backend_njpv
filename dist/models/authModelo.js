@@ -23,6 +23,7 @@ class AuthModelo {
             const result = yield connection_1.default.then((connection) => __awaiter(this, void 0, void 0, function* () {
                 return yield connection.query(query);
             }));
+            console.log(result);
             return result;
         });
     }
