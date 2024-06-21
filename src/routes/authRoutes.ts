@@ -1,8 +1,18 @@
 import { Router } from 'express';
-const router = Router();
+import { authController } from '../controllers/authController';
 
-router.get('/some-route', (req, res) => {
-  res.send('Hello from some-route');
-});
+class AuthRoutes {
+  public router: Router;
 
-export default router;
+  constructor() {
+    this.router = Router();
+    this.config();
+  }
+
+  config() {
+    this.router.post('/', authController.iniciarSesion); 
+  }
+}
+
+const authRoutes = new AuthRoutes();
+export default authRoutes.router;
