@@ -15,49 +15,46 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.authController = void 0;
 const validator_1 = __importDefault(require("validator"));
 const authModelo_1 = __importDefault(require("../models/authModelo"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const utils_1 = require("../utils/utils");
+// Asegúrate de cargar las variables de entorno al inicio del archivo
+require('dotenv').config();
 class AuthController {
     iniciarSesion(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { email, password } = req.body;
-                console.log(email, '', password);
                 // Verificar que los datos no estén vacíos
-                if (validator_1.default.isEmpty(email.trim()) ||
-                    validator_1.default.isEmpty(password.trim())) {
+                if (validator_1.default.isEmpty(email.trim()) || validator_1.default.isEmpty(password.trim())) {
                     return res
                         .status(400)
                         .json({ message: "Los campos son requeridos", code: 1 });
                 }
-                console.log('Validaciones');
                 // Verificar usuario por email
                 const lstUsers = yield authModelo_1.default.getuserByEmail(email);
-                console.log('DB ', lstUsers[0].email);
-                //let result = utils.checkPassword(password, lstUsers[0].password);
-                // result.then((value) =>{
-                //  if(value){
-                //   return res.json({message: "Autenticacion correcta", code:0});
-                // }else{
-                // return res.json({message: "Password Incorrecto", code:1});
-                // }
-                // })
-                /* let result = utils.checkPassword(password, lstUsers[0].password);
-                 result.then((value)=>{
-                  if(value){
-                      const newUser={
-                          email:lstUsers[0].email,
-                          password:lstUsers[0].password,
-                          role:lstUsers[0].role
-                      }
-                      console.log(process.env.SECRET)
-                      const env=require('dotenv').config();
-                      let token = jwt.sign(newUser,process.env.SECRET,{expiresIn:'1H'} )
-                      return res.json({message: "Autenticacion correcta", token, code:0});
-      
-                  }else{
-                      return res.json({message: "Password incorrecta", code:1});
-                  }
-      
-                 })*/
+                if (lstUsers.length <= 0) {
+                    return res.status(404).json({ message: "El usuario y/o contraseña es incorrecto", code: 1 });
+                }
+                // Verificar contraseña
+                let result = utils_1.utils.checkPassword(password, lstUsers[0].password);
+                result.then((value) => {
+                    if (value) {
+                        const newUser = {
+                            email: lstUsers[0].email,
+                            password: lstUsers[0].password,
+                            role: lstUsers[0].role
+                        };
+                        console.log('SECRET:', process.env.SECRET);
+                        let token = jsonwebtoken_1.default.sign(newUser, process.env.SECRET, { expiresIn: '1h' });
+                        return res.json({ message: "Autenticación correcta", token, code: 0 });
+                    }
+                    else {
+                        return res.json({ message: "Password Incorrecto", code: 1 });
+                    }
+                }).catch((err) => {
+                    console.error(err);
+                    return res.status(500).json({ message: "Error en el servidor", code: 1 });
+                });
             }
             catch (error) {
                 return res.status(500).json({ message: `${error.message}` });
